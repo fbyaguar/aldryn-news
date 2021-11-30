@@ -237,16 +237,16 @@ class LatestNewsPlugin(CMSPlugin):
 
     latest_entries = models.PositiveSmallIntegerField(default=5, help_text=_('The number of latests entries to be displayed.'))
     type_list = models.CharField(verbose_name=_("Type of list"), choices=TYPES, default=FULL, max_length=255)
-    tags = models.ManyToManyField('taggit.Tag', blank=True, help_text=_('Show only the news tagged with chosen tags.'))
+    tags = models.ManyToManyField(Tag, blank=True, help_text=_('Show only the news tagged with chosen tags.'))
 
     def __str__(self):
         return str(self.latest_entries)
 
     def copy_relations(self, oldinstance):
-        self.tags = oldinstance.tags.all()
+        self.tags.set(oldinstance.tags.all())
 
     def get_news(self):
-        news = News.published.language(self.language).select_related('category')
+        news = News.published.language(self.language).get_published().select_related('category')
         tags = list(self.tags.all())
         if tags:
             tagged_news = News.objects.filter(tags__in=tags)
