@@ -112,20 +112,24 @@ class CustomTaggableManager(_TaggableManager):
     """
 
     @require_instance_manager
-    def set(self, *tags, **kwargs):
+    def set(self, tags, *, through_defaults=None, **kwargs):
         """
         Set the object's tags to the given n tags. If the clear kwarg is True
         then all existing tags are removed (using `.clear()`) and the new tags
         added. Otherwise, only those tags that are not present in the args are
         removed and any new tags added.
+
+        Any kwarg apart from 'clear' will be passed when adding tags.
+
         """
         db = router.db_for_write(self.through, instance=self.instance)
+
         clear = kwargs.pop("clear", False)
         tag_kwargs = kwargs.pop("tag_kwargs", {})
 
         if clear:
             self.clear()
-            self.add(*tags)
+            self.add(*tags, **kwargs)
         else:
             # make sure we're working with a collection of a uniform type
             objs = self._to_tag_model_instances(tags, tag_kwargs)
@@ -145,7 +149,7 @@ class CustomTaggableManager(_TaggableManager):
                     new_objs.append(obj)
 
             self.remove(*old_tag_strs)
-            self.add(*new_objs)
+            self.add(*new_objs, through_defaults=through_defaults, **kwargs)
 
     @require_instance_manager
     def remove(self, *tags):
